@@ -21,6 +21,11 @@
     <!-- Profiles -->
     <java-symbol type="xml" name="profile_default" />
     <java-symbol type="string" name="wildcardProfile" />
+    <java-symbol type="drawable" name="ic_settings_profiles" />
+    <java-symbol type="string" name="profile_notification_channel" />
+    <java-symbol type="string" name="profile_notification_title" />
+    <java-symbol type="string" name="profile_notification_text_time" />
+    <java-symbol type="string" name="profile_notification_text_wifi_bt" />
 
     <!-- Proximity check on screen on -->
     <java-symbol type="bool" name="config_proximityCheckOnWake" />

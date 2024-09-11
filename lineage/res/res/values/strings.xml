@@ -54,6 +54,12 @@
     <!-- Name of wildcard profile. -->
     <string name="wildcardProfile">Other</string>
 
+    <!-- Profile notification -->
+    <string name="profile_notification_channel">System profiles</string>
+    <string name="profile_notification_title">System profiles triggered</string>
+    <string name="profile_notification_text_time">System profile %1$s activated due to time trigger</string>
+    <string name="profile_notification_text_wifi_bt">System profile %1$s activated due to %2$s connectivity</string>
+
     <!-- LiveDisplay strings -->
     <string name="live_display_title" translatable="false">LiveDisplay</string>
     <string name="live_display_auto">Automatic</string>

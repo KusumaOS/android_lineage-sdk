@@ -16,6 +16,10 @@
 
 package org.lineageos.platform.internal;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -40,6 +44,7 @@ import java.util.UUID;
  */
 public class ProfileTriggerHelper extends BroadcastReceiver {
     private static final String TAG = "ProfileTriggerHelper";
+    private static final String CHANNEL_ID = "profile_trigger_channel";
     public static final String INTENT_ACTION_PROFILE_TIME_TRIGGER = 
             "lineageos.extra.platform.intent.action.PROFILE_TIME_TRIGGER";
 
@@ -84,6 +89,14 @@ public class ProfileTriggerHelper extends BroadcastReceiver {
         mContext.getContentResolver().registerContentObserver(
                 LineageSettings.System.getUriFor(LineageSettings.System.SYSTEM_PROFILES_ENABLED), false,
                 mSettingsObserver);
+
+        NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                mContext.getString(R.string.profile_notification_channel),
+                NotificationManager.IMPORTANCE_LOW
+        );
+        NotificationManager notificationManager = mContext.getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
     }
 
     public void updateEnabled() {
@@ -158,6 +171,8 @@ public class ProfileTriggerHelper extends BroadcastReceiver {
             if (!currentProfileUuid.equals(p.getUuid())) {
                 mManagerService.setActiveProfileInternal(p, true);
                 newProfileSelected = true;
+                showNotification(mContext.getString(R.string.profile_notification_title),
+                        mContext.getString(R.string.profile_notification_text_wifi_bt, p.getName(), id));
             }
         }
 
@@ -194,6 +209,8 @@ public class ProfileTriggerHelper extends BroadcastReceiver {
 
         if (!currentProfileUuid.equals(profileUuid) && targetProfile != null) {
             mManagerService.setActiveProfileInternal(targetProfile, true);
+            showNotification(mContext.getString(R.string.profile_notification_title), 
+                    mContext.getString(R.string.profile_notification_text_time, targetProfile.getName()));
         }
     }
 
@@ -213,5 +230,24 @@ public class ProfileTriggerHelper extends BroadcastReceiver {
             return wifiinfo != null ? removeDoubleQuotes(wifiinfo.getSSID()) : null;
         }
         return null;
+    }
+
+    private void showNotification(String title, String message) {
+        Intent intent = new Intent("org.lineageos.lineageparts.PROFILES_SETTINGS");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        long currentTime = System.currentTimeMillis();
+
+        Notification.Builder builder = new Notification.Builder(mContext, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_settings_profiles)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .setWhen(currentTime)
+                .setShowWhen(true);
+        NotificationManager notificationManager = mContext.getSystemService(NotificationManager.class);
+        notificationManager.notify(1, builder.build());
     }
 }
