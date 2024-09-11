@@ -40,6 +40,8 @@ import java.util.UUID;
  */
 public class ProfileTriggerHelper extends BroadcastReceiver {
     private static final String TAG = "ProfileTriggerHelper";
+    public static final String INTENT_ACTION_PROFILE_TIME_TRIGGER = 
+            "lineageos.extra.platform.intent.action.PROFILE_TIME_TRIGGER";
 
     private Context mContext;
     private ProfileManagerService mManagerService;
@@ -76,6 +78,7 @@ public class ProfileTriggerHelper extends BroadcastReceiver {
         mIntentFilter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         mIntentFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
        // mIntentFilter.addAction(AudioManager.A2DP_ROUTE_CHANGED_ACTION);
+        mIntentFilter.addAction(INTENT_ACTION_PROFILE_TIME_TRIGGER);
         updateEnabled();
 
         mContext.getContentResolver().registerContentObserver(
@@ -132,6 +135,12 @@ public class ProfileTriggerHelper extends BroadcastReceiver {
                     Profile.TriggerState.ON_A2DP_DISCONNECT;
 
             checkTriggers(Profile.TriggerType.BLUETOOTH, device.getAddress(), triggerState);*/
+        } else if (action.equals(INTENT_ACTION_PROFILE_TIME_TRIGGER)) {
+            String profileUuidString = intent.getStringExtra("PROFILE_UUID");
+            if (profileUuidString != null) {
+                UUID profileUuid = UUID.fromString(profileUuidString);
+                handleTimeTrigger(profileUuid);
+            }
         }
     }
 
@@ -175,6 +184,16 @@ public class ProfileTriggerHelper extends BroadcastReceiver {
                 }
             }
 
+        }
+    }
+
+    private void handleTimeTrigger(UUID profileUuid) {
+        Profile activeProfile = mManagerService.getActiveProfileInternal();
+        UUID currentProfileUuid = activeProfile.getUuid();
+        Profile targetProfile = mManagerService.getProfileInternal(profileUuid);
+
+        if (!currentProfileUuid.equals(profileUuid) && targetProfile != null) {
+            mManagerService.setActiveProfileInternal(targetProfile, true);
         }
     }
 

@@ -599,7 +599,7 @@ public class ProfileManagerService extends LineageSystemService {
         profile.addProfileGroup(new ProfileGroup(group.getUuid(), defaultGroup));
     }
 
-    private Profile getProfileInternal(UUID profileUuid) {
+    /* package */ Profile getProfileInternal(UUID profileUuid) {
         // use primary UUID first
         if (mProfiles.containsKey(profileUuid)) {
             return mProfiles.get(profileUuid);
