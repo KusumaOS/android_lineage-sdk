@@ -99,6 +99,10 @@ public final class Profile implements Parcelable, Comparable {
 
     private int mNotificationLightMode = NotificationLightMode.DEFAULT;
 
+    private int mDndMode = DndMode.DEFAULT;
+
+    private int mHeadsUpMode = HeadsUpMode.DEFAULT;
+
     /**
      * Lock modes of a device
      */
@@ -132,6 +136,30 @@ public final class Profile implements Parcelable, Comparable {
         /** Represents an enabled Notification light mode */
         public static final int ENABLE = 1;
         /** Represents a disabled Notification light mode */
+        public static final int DISABLE = 2;
+    }
+
+    /**
+     * Do not disturb modes available on a device
+     */
+    public static class DndMode {
+        /** Represents a default DND mode (user choice) */
+        public static final int DEFAULT = 0;
+        /** Represents an enabled DND mode */
+        public static final int ENABLE = 1;
+        /** Represents a disabled DND mode */
+        public static final int DISABLE = 2;
+    }
+
+    /**
+     * Heads up modes available on a device
+     */
+    public static class HeadsUpMode {
+        /** Represents a default Heads Up mode (user choice) */
+        public static final int DEFAULT = 0;
+        /** Represents an enabled Heads Up mode */
+        public static final int ENABLE = 1;
+        /** Represents a disabled Heads Up mode */
         public static final int DISABLE = 2;
     }
 
@@ -618,6 +646,10 @@ public final class Profile implements Parcelable, Comparable {
             dest.writeInt(0);
         }
 
+        dest.writeInt(mDndMode);
+
+        dest.writeInt(mHeadsUpMode);
+
         // Complete the parcel info for the concierge
         parcelInfo.complete();
     }
@@ -695,6 +727,8 @@ public final class Profile implements Parcelable, Comparable {
                     networkConnectionSubIds.put(connection.getSubId(), connection);
                 }
             }
+            mDndMode = in.readInt();
+            mHeadsUpMode = in.readInt();
         }
 
         // Complete the parcel info for the concierge
@@ -886,6 +920,50 @@ public final class Profile implements Parcelable, Comparable {
     }
 
     /**
+     * Get the {@link DndMode} associated with the {@link Profile}
+     * @return
+     */
+    public int getDndMode() {
+        return mDndMode;
+    }
+
+    /**
+     * Set the {@link DndMode} associated with the {@link Profile}
+     * @return
+     */
+    public void setDndMode(int dndMode) {
+        if (dndMode < DndMode.DEFAULT
+                || dndMode > DndMode.DISABLE) {
+            mDndMode = DndMode.DEFAULT;
+        } else {
+            mDndMode = dndMode;
+        }
+        mDirty = true;
+    }
+
+    /**
+     * Get the {@link HeadsUpMode} associated with the {@link Profile}
+     * @return
+     */
+    public int getHeadsUpMode() {
+        return mHeadsUpMode;
+    }
+
+    /**
+     * Set the {@link HeadsUpMode} associated with the {@link Profile}
+     * @return
+     */
+    public void setHeadsUpMode(int headsUpMode) {
+        if (headsUpMode < HeadsUpMode.DEFAULT
+                || headsUpMode > HeadsUpMode.DISABLE) {
+            mHeadsUpMode = HeadsUpMode.DEFAULT;
+        } else {
+            mHeadsUpMode = headsUpMode;
+        }
+        mDirty = true;
+    }
+
+    /**
      * Get the {@link AirplaneModeSettings} associated with the {@link Profile}
      * @return
      */
@@ -999,6 +1077,14 @@ public final class Profile implements Parcelable, Comparable {
         builder.append("<notification-light-mode>");
         builder.append(mNotificationLightMode);
         builder.append("</notification-light-mode>\n");
+
+        builder.append("<dnd-mode>");
+        builder.append(mDndMode);
+        builder.append("</dnd-mode>\n");
+
+        builder.append("<heads-up-mode>");
+        builder.append(mHeadsUpMode);
+        builder.append("</heads-up-mode>\n");
 
         mAirplaneMode.getXmlString(builder, context);
 
@@ -1151,6 +1237,12 @@ public final class Profile implements Parcelable, Comparable {
                 if (name.equals("notification-light-mode")) {
                     profile.setNotificationLightMode(Integer.valueOf(xpp.nextText()));
                 }
+                if (name.equals("dnd-mode")) {
+                    profile.setDndMode(Integer.valueOf(xpp.nextText()));
+                }
+                if (name.equals("heads-up-mode")) {
+                    profile.setHeadsUpMode(Integer.valueOf(xpp.nextText()));
+                }
                 if (name.equals("profileGroup")) {
                     ProfileGroup pg = ProfileGroup.fromXml(xpp, context);
                     profile.addProfileGroup(pg);
@@ -1233,6 +1325,20 @@ public final class Profile implements Parcelable, Comparable {
                 Settings.System.NOTIFICATION_LIGHT_PULSE,
                     mNotificationLightMode == NotificationLightMode.ENABLE ? 1 : 0,
                     UserHandle.USER_CURRENT);
+        }
+
+        // Set DND mode
+        if (mDndMode != DndMode.DEFAULT) {
+            Settings.Global.putInt(context.getContentResolver(),
+                Settings.Global.ZEN_MODE, mDndMode == DndMode.ENABLE ? 
+                Settings.Global.ZEN_MODE_IMPORTANT_INTERRUPTIONS : Settings.Global.ZEN_MODE_OFF);
+        }
+
+        // Set Heads Up mode
+        if (mHeadsUpMode != HeadsUpMode.DEFAULT) {
+            Settings.Global.putInt(context.getContentResolver(),
+                    Settings.Global.HEADS_UP_NOTIFICATIONS_ENABLED,
+                    mHeadsUpMode == HeadsUpMode.ENABLE ? 1 : 0);
         }
     }
 
