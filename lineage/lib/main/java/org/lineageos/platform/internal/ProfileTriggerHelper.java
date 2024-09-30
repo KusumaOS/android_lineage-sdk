@@ -45,6 +45,8 @@ import java.util.UUID;
 public class ProfileTriggerHelper extends BroadcastReceiver {
     private static final String TAG = "ProfileTriggerHelper";
     private static final String CHANNEL_ID = "profile_trigger_channel";
+    private static final String INTENT_ACTION_PROFILE_APP_TRIGGER = 
+            "lineageos.extra.platform.intent.action.PROFILE_APP_TRIGGER";
     public static final String INTENT_ACTION_PROFILE_TIME_TRIGGER = 
             "lineageos.extra.platform.intent.action.PROFILE_TIME_TRIGGER";
 
@@ -83,6 +85,7 @@ public class ProfileTriggerHelper extends BroadcastReceiver {
         mIntentFilter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         mIntentFilter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
        // mIntentFilter.addAction(AudioManager.A2DP_ROUTE_CHANGED_ACTION);
+        mIntentFilter.addAction(INTENT_ACTION_PROFILE_APP_TRIGGER);
         mIntentFilter.addAction(INTENT_ACTION_PROFILE_TIME_TRIGGER);
         updateEnabled();
 
@@ -148,6 +151,12 @@ public class ProfileTriggerHelper extends BroadcastReceiver {
                     Profile.TriggerState.ON_A2DP_DISCONNECT;
 
             checkTriggers(Profile.TriggerType.BLUETOOTH, device.getAddress(), triggerState);*/
+        } else if (action.equals(INTENT_ACTION_PROFILE_APP_TRIGGER)) {
+            String profileUuidString = intent.getStringExtra("PROFILE_UUID");
+            if (profileUuidString != null) {
+                UUID profileUuid = UUID.fromString(profileUuidString);
+                handleAppTrigger(profileUuid);
+            }
         } else if (action.equals(INTENT_ACTION_PROFILE_TIME_TRIGGER)) {
             String profileUuidString = intent.getStringExtra("PROFILE_UUID");
             if (profileUuidString != null) {
@@ -199,6 +208,18 @@ public class ProfileTriggerHelper extends BroadcastReceiver {
                 }
             }
 
+        }
+    }
+
+    private void handleAppTrigger(UUID profileUuid) {
+        Profile activeProfile = mManagerService.getActiveProfileInternal();
+        UUID currentProfileUuid = activeProfile.getUuid();
+        Profile targetProfile = mManagerService.getProfileInternal(profileUuid);
+
+        if (!currentProfileUuid.equals(profileUuid) && targetProfile != null) {
+            mManagerService.setActiveProfileInternal(targetProfile, true);
+            showNotification(mContext.getString(R.string.profile_notification_title), 
+                    mContext.getString(R.string.profile_notification_text_app, targetProfile.getName()));
         }
     }
 
